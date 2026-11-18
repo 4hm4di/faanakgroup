@@ -217,7 +217,7 @@
   /* ---------------------------------------------------------------- scroll-driven stages
      Large screens: the section pins and scrolling steps through its items.
      Smaller or short screens: companies open as they scroll in; How We Work stacks into cards. */
-  const bigMQ = window.matchMedia('(min-width: 1024px) and (min-height: 700px)');
+  const bigMQ = window.matchMedia('(min-width: 1024px) and (min-height: 720px)');
   $$('[data-scrolly]').forEach((sec) => {
     const type = sec.dataset.scrolly;
     const steps = parseInt(sec.style.getPropertyValue('--steps'), 10) || 3;
