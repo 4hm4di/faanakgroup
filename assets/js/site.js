@@ -148,60 +148,119 @@
   /* ---------------------------------------------------------------- accordions */
   $$('[data-acc]').forEach((acc) => {
     const items = $$('[data-acc-item]', acc);
-    const useHash = acc.hasAttribute('data-acc-hash');
-    const setOpen = (item, open, { updateHash = true } = {}) => {
+    const stage = acc.closest('[data-scrolly]');
+    const setOpen = (item, open) => {
       item.classList.toggle('is-open', open);
       $('.acc__btn', item).setAttribute('aria-expanded', String(open));
-      if (useHash && updateHash && open) history.replaceState(null, '', '#' + item.id);
     };
-    items.forEach((item) => {
-      setOpen(item, item.hasAttribute('data-open'), { updateHash: false });
+    acc._setOpen = setOpen;
+    items.forEach((item, i) => {
+      setOpen(item, item.hasAttribute('data-open'));
       $('.acc__btn', item).addEventListener('click', () => {
-        const open = !item.classList.contains('is-open');
-        if (useHash) items.forEach((o) => o !== item && setOpen(o, false));
-        setOpen(item, open);
+        if (stage && stage.classList.contains('is-on')) { stage._goTo(i); return; }
+        setOpen(item, !item.classList.contains('is-open'));
       });
     });
-    if (useHash) {
-      const fromHash = () => {
-        const hit = items.find((i) => '#' + i.id === location.hash);
-        if (!hit) return;
-        items.forEach((o) => setOpen(o, o === hit, { updateHash: false }));
-      };
-      fromHash();
-      window.addEventListener('hashchange', fromHash);
+    // Small screens: each company opens as it scrolls into view (and stays open).
+    if (stage && 'IntersectionObserver' in window) {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach((e) => {
+          if (!e.isIntersecting || stage.classList.contains('is-on')) return;
+          const item = e.target.closest('[data-acc-item]');
+          if (!item.dataset.autoOpened) { item.dataset.autoOpened = '1'; setOpen(item, true); }
+        });
+      }, { rootMargin: '0px 0px -35% 0px', threshold: 0 });
+      items.forEach((item) => io.observe($('.acc__h', item)));
     }
   });
 
   /* ---------------------------------------------------------------- tabs (how we work) */
   $$('[data-tabs]').forEach((wrap) => {
     const tabs = $$('[role="tab"]', wrap);
+    const stage = wrap.closest('[data-scrolly]');
     const select = (tab, focus) => {
       tabs.forEach((t) => {
         const on = t === tab;
+        const panel = document.getElementById(t.getAttribute('aria-controls'));
+        const was = t.getAttribute('aria-selected') === 'true';
         t.setAttribute('aria-selected', String(on));
         t.tabIndex = on ? 0 : -1;
-        const panel = document.getElementById(t.getAttribute('aria-controls'));
-        if (on) {
-          panel.hidden = false;
+        panel.hidden = !on;
+        if (on && !was) {
           panel.classList.remove('is-entering');
           void panel.offsetWidth; // restart the entrance animation for the newly shown panel
           panel.classList.add('is-entering');
-        } else {
-          panel.hidden = true;
         }
       });
-      if (focus) tab.focus();
+      if (focus) tab.focus({ preventScroll: true });
     };
+    wrap._select = select;
     tabs.forEach((t, i) => {
-      t.addEventListener('click', () => select(t, false));
+      t.addEventListener('click', () => {
+        if (stage && stage.classList.contains('is-on')) { stage._goTo(i); return; }
+        select(t, false);
+      });
       t.addEventListener('keydown', (e) => {
         const keys = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 };
-        if (e.key in keys) { e.preventDefault(); select(tabs[(i + keys[e.key] + tabs.length) % tabs.length], true); }
-        if (e.key === 'Home') { e.preventDefault(); select(tabs[0], true); }
-        if (e.key === 'End') { e.preventDefault(); select(tabs[tabs.length - 1], true); }
+        let next = null;
+        if (e.key in keys) next = (i + keys[e.key] + tabs.length) % tabs.length;
+        if (e.key === 'Home') next = 0;
+        if (e.key === 'End') next = tabs.length - 1;
+        if (next === null) return;
+        e.preventDefault();
+        if (stage && stage.classList.contains('is-on')) { stage._goTo(next); tabs[next].focus({ preventScroll: true }); }
+        else select(tabs[next], true);
       });
     });
+  });
+
+  /* ---------------------------------------------------------------- scroll-driven stages
+     Large screens: the section pins and scrolling steps through its items.
+     Smaller or short screens: companies open as they scroll in; How We Work stacks into cards. */
+  const bigMQ = window.matchMedia('(min-width: 1024px) and (min-height: 700px)');
+  $$('[data-scrolly]').forEach((sec) => {
+    const type = sec.dataset.scrolly;
+    const steps = parseInt(sec.style.getPropertyValue('--steps'), 10) || 3;
+    const counter = $('[data-scrolly-n]', sec);
+    const acc = $('[data-acc]', sec);
+    const tabsWrap = $('[data-tabs]', sec);
+    const items = type === 'acc' ? $$('[data-acc-item]', sec) : $$('[role="tab"]', sec);
+    let top = 0, span = 1, current = -1, ticking = false;
+    const measure = () => {
+      const r = sec.getBoundingClientRect();
+      top = r.top + window.scrollY;
+      span = Math.max(1, sec.offsetHeight - window.innerHeight);
+    };
+    const activate = (i) => {
+      if (i === current) return;
+      current = i;
+      if (counter) counter.textContent = String(i + 1).padStart(2, '0');
+      if (type === 'acc') items.forEach((it, k) => acc._setOpen(it, k === i));
+      else tabsWrap._select(items[i], false);
+    };
+    const update = () => {
+      ticking = false;
+      if (!sec.classList.contains('is-on')) return;
+      const p = (window.scrollY - top) / span;
+      activate(Math.max(0, Math.min(steps - 1, Math.floor(p * steps))));
+    };
+    sec._goTo = (i) => {
+      window.scrollTo({ top: top + ((i + 0.5) / steps) * span, behavior: reduceMQ.matches ? 'auto' : 'smooth' });
+    };
+    const setMode = () => {
+      const on = bigMQ.matches;
+      sec.classList.toggle('is-on', on);
+      if (type === 'tabs') sec.classList.toggle('is-stacked', !on);
+      current = -1;
+      measure();
+      if (on) update();
+    };
+    setMode();
+    bigMQ.addEventListener('change', setMode);
+    window.addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    let rt;
+    window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { measure(); update(); }, 120); });
+    window.addEventListener('load', () => { measure(); update(); });
   });
 
   /* ---------------------------------------------------------------- marquee pause */
