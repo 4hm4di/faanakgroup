@@ -120,6 +120,33 @@
   onScroll();
   window.addEventListener('scroll', onScroll, { passive: true });
 
+
+  /* ---------------------------------------------------------------- companies dropdown */
+  $$('[data-dd]').forEach((dd) => {
+    const btn = $('[data-dd-btn]', dd);
+    const panel = $('[data-dd-panel]', dd);
+    let closeT;
+    const set = (open) => {
+      clearTimeout(closeT);
+      btn.setAttribute('aria-expanded', String(open));
+      panel.classList.toggle('is-open', open);
+      if (open) header.classList.add('is-solid'); else onScroll();
+    };
+    const isOpen = () => btn.getAttribute('aria-expanded') === 'true';
+    const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+    let hoverOpened = false; // a click right after hover-open should keep the panel open, not toggle it shut
+    btn.addEventListener('click', () => {
+      if (hoverOpened && isOpen()) { hoverOpened = false; return; }
+      set(!isOpen());
+    });
+    dd.addEventListener('pointerenter', () => { if (fine.matches && !isOpen()) { hoverOpened = true; set(true); } });
+    dd.addEventListener('pointerleave', () => { hoverOpened = false; if (fine.matches) closeT = setTimeout(() => set(false), 160); });
+    dd.addEventListener('focusout', (e) => { if (!dd.contains(e.relatedTarget)) set(false); });
+    document.addEventListener('click', (e) => { if (isOpen() && !dd.contains(e.target)) set(false); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) { set(false); btn.focus(); } });
+    panel.addEventListener('click', (e) => { if (e.target.closest('a')) set(false); });
+  });
+
   /* ---------------------------------------------------------------- mobile menu */
   const menuBtn = $('[data-menu-btn]');
   const menu = $('[data-menu]');
@@ -143,7 +170,7 @@
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && menuBtn.getAttribute('aria-expanded') === 'true') { setMenu(false); menuBtn.focus(); }
   });
-  window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => { if (e.matches) setMenu(false); });
+  window.matchMedia('(min-width: 1121px)').addEventListener('change', (e) => { if (e.matches) setMenu(false); });
 
   /* ---------------------------------------------------------------- accordions */
   $$('[data-acc]').forEach((acc) => {
