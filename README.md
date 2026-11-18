@@ -1,0 +1,22 @@
+# FAANAK Group website
+
+The website for **FAANAK Group**: FAANAK Energy Resources & Logistics Ltd, FAANAK Homes & Properties Ltd and FAANAK Farms Ltd.
+
+Designed and built by [Graphcent](https://graphcent.com).
+
+## Stack
+A static site with no build step and no dependencies. GitHub Pages serves it straight from `main`.
+
+- `index.html`: the one-page site (hero, about, companies, how we work, numbers, process, gallery, FAQ, contact)
+- `assets/css/site.css`: brand tokens (Deep Earth, Harmattan, Sun Amber, Laterite, Field Green), layout and motion
+- `assets/js/site.js`: text splitting and scroll reveals, the companies accordion (deep-linkable as `#energy`, `#homes`, `#farms`), tabs, counters, marquee pause and the contact form (opens the visitor's email app)
+- `assets/fonts/`: Unbounded and Archivo, subset as variable woff2 files (SIL Open Font License)
+- `assets/img/`: responsive WebP images with JPG fallbacks
+- `assets/brand/`: logo and symbol SVGs
+- `assets/icons/sprite.svg`: the FAANAK lane-style icon set
+
+## Accessibility and motion
+Every animation respects `prefers-reduced-motion`. The moving strips have pause buttons, and the accordion and tabs work from the keyboard. Headlines that animate letter by letter keep their full text for screen readers.
+
+## Custom domain
+To serve the site on faanakgroup.com, add the domain under Settings > Pages and point the DNS at GitHub Pages. Then update the `og:image` and `og:url` addresses in `index.html` and the paths in `404.html`.
