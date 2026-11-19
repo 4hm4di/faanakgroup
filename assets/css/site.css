@@ -1143,3 +1143,4 @@ ol, ul { padding: 0; list-style: none; }
   .jobs__general .btn { width: 100%; justify-content: space-between; }
   .jobs__general .btn span:first-child { white-space: normal; text-align: left; line-height: 1.2; }
 }
+.contact__note { font: 600 11px/1 var(--text); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
