@@ -290,6 +290,31 @@
     window.addEventListener('load', () => { measure(); update(); });
   });
 
+
+  /* ---------------------------------------------------------------- filters (careers, insights) */
+  $$('[data-filter]').forEach((box) => {
+    const btns = $$('[data-filter-btn]', box);
+    const items = $$('[data-cat]', box);
+    const status = $('[data-filter-status]', box);
+    const noun = status ? status.dataset.noun : 'item';
+    btns.forEach((b) => b.addEventListener('click', () => {
+      const v = b.dataset.filterBtn;
+      btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      let n = 0;
+      items.forEach((it) => {
+        const show = v === 'all' || it.dataset.cat === v;
+        it.hidden = !show;
+        if (show) {
+          n += 1;
+          it.classList.remove('is-entering');
+          void it.offsetWidth; // restart the short fade for items that stay or return
+          it.classList.add('is-entering');
+        }
+      });
+      if (status) status.textContent = `Showing ${n} ${noun}${n === 1 ? '' : 's'}`;
+    }));
+  });
+
   /* ---------------------------------------------------------------- marquee pause */
   $$('[data-marquee]').forEach((m) => {
     const btn = $('[data-pause]', m);
