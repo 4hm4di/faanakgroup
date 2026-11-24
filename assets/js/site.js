@@ -139,8 +139,13 @@
       if (hoverOpened && isOpen()) { hoverOpened = false; return; }
       set(!isOpen());
     });
-    dd.addEventListener('pointerenter', () => { if (fine.matches && !isOpen()) { hoverOpened = true; set(true); } });
-    dd.addEventListener('pointerleave', () => { hoverOpened = false; if (fine.matches) closeT = setTimeout(() => set(false), 160); });
+    dd.addEventListener('pointerenter', () => {
+      if (!fine.matches) return;
+      clearTimeout(closeT); // coming back before the grace period ends keeps it open
+      if (!isOpen()) { hoverOpened = true; set(true); }
+    });
+    // a short grace period forgives a pointer that cuts a corner on its way to the cards
+    dd.addEventListener('pointerleave', () => { hoverOpened = false; if (fine.matches) closeT = setTimeout(() => set(false), 280); });
     dd.addEventListener('focusout', (e) => { if (!dd.contains(e.relatedTarget)) set(false); });
     document.addEventListener('click', (e) => { if (isOpen() && !dd.contains(e.target)) set(false); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && isOpen()) { set(false); btn.focus(); } });

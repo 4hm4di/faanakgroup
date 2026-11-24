@@ -225,7 +225,7 @@ ol, ul { padding: 0; list-style: none; }
 }
 .menu.is-open { opacity: 1; transform: none; }
 .menu__nav { display: grid; padding-block: 24px 48px; }
-.menu__nav a {
+.menu__nav > a {
   font: 600 clamp(28px, 8vw, 44px)/1 var(--display); text-transform: uppercase; letter-spacing: -0.03em;
   text-decoration: none; padding-block: 18px; border-bottom: 1px solid var(--line-d);
 }
@@ -592,7 +592,7 @@ ol, ul { padding: 0; list-style: none; }
 
 /* ================================================================ v2: multi-page components */
 .nav > a[aria-current="page"]::after { transform: scaleX(1); }
-.menu__nav a[aria-current="page"] { color: var(--amber); }
+.menu__nav > a[aria-current="page"] { color: var(--amber); }
 .menu__foot { display: grid; gap: 12px; padding-bottom: max(32px, env(safe-area-inset-bottom)); color: var(--muted-d); }
 .menu__foot a { text-decoration: none; font-weight: 600; }
 .hero__tags a { display: flex; align-items: center; gap: 10px; text-decoration: none; transition: color 200ms ease; }
@@ -1144,3 +1144,49 @@ ol, ul { padding: 0; list-style: none; }
   .jobs__general .btn span:first-child { white-space: normal; text-align: left; line-height: 1.2; }
 }
 .contact__note { font: 600 11px/1 var(--text); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
+
+/* ================================================================ v5: hover bridge + mobile menu motion */
+/* invisible bridge from the Companies button down to the panel, so the pointer never "leaves" on the way */
+.nav__btn::before { content: ""; position: absolute; left: -24px; right: -24px; top: 100%; height: calc(var(--header-h) / 2 + 12px); }
+
+/* mobile menu: clip reveal from the header down, items follow in a short stagger, close is quicker */
+.menu {
+  opacity: 1; transform: none;
+  clip-path: inset(0 0 100% 0);
+  transition: clip-path 220ms var(--ease-out);
+}
+.menu.is-open { clip-path: inset(0 0 0 0); transition: clip-path 420ms var(--ease-drawer); }
+.menu__nav > *, .menu__foot {
+  opacity: 0; transform: translateY(14px);
+  transition: opacity 150ms ease, transform 150ms var(--ease-out);
+}
+.menu.is-open .menu__nav > *, .menu.is-open .menu__foot {
+  opacity: 1; transform: none;
+  transition: opacity 280ms ease, transform 460ms var(--ease-out);
+  transition-delay: calc(90ms + var(--i, 0) * 40ms);
+}
+.menu__nav > :nth-child(1) { --i: 0; } .menu__nav > :nth-child(2) { --i: 1; } .menu__nav > :nth-child(3) { --i: 2; }
+.menu__nav > :nth-child(4) { --i: 3; } .menu__nav > :nth-child(5) { --i: 4; } .menu__nav > :nth-child(6) { --i: 5; }
+.menu__nav > :nth-child(7) { --i: 6; } .menu__foot { --i: 7; }
+
+/* mobile company cards: the same cards as the desktop panel, stacked */
+.menu__cards { display: grid; gap: 8px; }
+.menu__cards li { opacity: 0; transform: translateY(10px); transition: opacity 150ms ease, transform 150ms var(--ease-out); }
+.menu.is-open .menu__cards li { opacity: 1; transform: none; transition: opacity 280ms ease, transform 460ms var(--ease-out); }
+.menu.is-open .menu__cards li:nth-child(1) { transition-delay: 190ms; }
+.menu.is-open .menu__cards li:nth-child(2) { transition-delay: 230ms; }
+.menu.is-open .menu__cards li:nth-child(3) { transition-delay: 270ms; }
+.menu .dd__card { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-rows: auto; align-items: center; gap: 14px; padding: 16px; }
+.menu .dd__card .badge { width: 40px; height: 40px; }
+.menu .dd__arrow { grid-column: 3; align-self: center; }
+.menu .dd__name { font-size: 16px; }
+.menu .dd__desc { font-size: 13px; }
+.menu .dd__card:active { transform: scale(0.98); }
+.menu__group { padding-block: 20px 22px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .menu, .menu.is-open { clip-path: none; transition: opacity 200ms ease; }
+  .menu { opacity: 0; } .menu.is-open { opacity: 1; }
+  .menu__nav > *, .menu__foot, .menu__cards li,
+  .menu.is-open .menu__nav > *, .menu.is-open .menu__foot, .menu.is-open .menu__cards li { opacity: 1; transform: none; transition: none; }
+}
