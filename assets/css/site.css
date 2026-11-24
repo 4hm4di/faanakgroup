@@ -101,7 +101,7 @@ ol, ul { padding: 0; list-style: none; }
   margin-bottom: clamp(20px, 3vw, 32px);
 }
 .dark .kicker { color: var(--muted-d); }
-.kicker__dot { width: 8px; height: 8px; background: var(--amber); flex: none; }
+
 .title {
   font-family: var(--display);
   font-weight: 600;
